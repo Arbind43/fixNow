@@ -163,7 +163,7 @@ export const verifyPayment = async (req: Request, res: Response, next: NextFunct
               status: 'paid'
             },
             { upsert: true, new: true }
-          ).catch(e => console.error('Failed to create invoice:', e));
+          ).catch((e: any) => console.error('Failed to create invoice:', e));
         }
       }
       return res.status(200).json({ success: true, message: 'Payment confirmed (test mode)' });
