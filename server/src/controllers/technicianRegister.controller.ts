@@ -43,7 +43,7 @@ export const registerTechnician = async (req: Request, res: Response, next: Next
     }
 
     // Collect uploaded file paths
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+    const files = req.files as { [fieldname: string]: any[] } | undefined;
     const fileUrl = (field: string) =>
       files?.[field]?.[0]
         ? `/uploads/${files[field][0].filename}`
@@ -108,7 +108,7 @@ export const registerTechnician = async (req: Request, res: Response, next: Next
         licenseUrl:     fileUrl('drivingLicense'),
         certificateUrl: fileUrl('tradeCertificate'),
         portfolioUrls: (files?.['portfolioPhotos'] || []).map(
-          (f: Express.Multer.File) => `/uploads/${f.filename}`
+          (f: any) => `/uploads/${f.filename}`
         ),
       },
 

@@ -37,7 +37,7 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
                   ...baseQuery,
                   $or: [
                     { services: new mongoose.Types.ObjectId(serviceId) },
-                    { categories: new mongoose.Types.ObjectId(service.category as string) }
+                    { categories: new mongoose.Types.ObjectId(service.category as unknown as string) }
                   ]
                 },
                 maxDistance: 100000, // 100 km
@@ -350,7 +350,7 @@ export const updateBookingStatus = async (req: Request, res: Response, next: Nex
         };
         const notif = await Notification.create({
           user: notifyUserId,
-          title: `Booking ${status.replace('_', ' ').replace(/^\w/, c => c.toUpperCase())}`,
+          title: `Booking ${status.replace('_', ' ').replace(/^\w/, (c: string) => c.toUpperCase())}`,
           message: statusMsg[status] || `Booking status updated to ${status}.`,
           type: 'booking',
           link: userRole === 'technician' ? '/dashboard/bookings' : '/dashboard/job-requests',

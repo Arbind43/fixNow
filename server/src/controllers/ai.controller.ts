@@ -58,7 +58,7 @@ export const chatWithAssistant = async (req: Request, res: Response, next: NextF
 
     // Format history for the Groq API
     const formattedHistory = Array.isArray(history) ? history.map((msg: any) => ({
-      role: msg.role === 'user' ? 'user' : 'assistant',
+      role: (msg.role === 'user' ? 'user' : 'assistant') as any,
       content: msg.content
     })) : [];
 
