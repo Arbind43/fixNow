@@ -24,6 +24,41 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+// Root route - server info page
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>FixNow API Server</title>
+      <style>
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #1e293b; border-radius: 16px; padding: 40px 60px; text-align: center; border: 1px solid #334155; }
+        h1 { color: #6366f1; font-size: 2.5rem; margin-bottom: 8px; }
+        p { color: #94a3b8; font-size: 1.1rem; }
+        .badge { display: inline-block; background: #22c55e; color: white; padding: 4px 16px; border-radius: 99px; font-size: 0.85rem; margin-top: 16px; }
+        .endpoints { margin-top: 24px; text-align: left; background: #0f172a; border-radius: 8px; padding: 16px 24px; font-size: 0.9rem; }
+        .endpoints span { color: #6366f1; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <h1>⚡ FixNow API</h1>
+        <p>Backend server is running successfully</p>
+        <div class="badge">● Online</div>
+        <div class="endpoints">
+          <p><span>GET</span> /api/health — Health check</p>
+          <p><span>POST</span> /api/auth/login — User login</p>
+          <p><span>GET</span> /api/categories — All categories</p>
+          <p><span>GET</span> /api/services — All services</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
 // Health check route
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', message: 'Server is running normally' });
