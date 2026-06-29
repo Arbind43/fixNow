@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import AuthLayout from '../../components/layout/AuthLayout';
 import { Input, Button } from '../../components/ui';
 import { showToast } from '../../components/ui/Toast';
@@ -19,11 +20,7 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      // Assuming a /api/auth/reset-password endpoint exists
-      // await axios.post('/api/auth/reset-password', { email, otp, newPassword });
-      
-      // Simulating success for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await axios.post('/api/auth/reset-password', { email, otp, newPassword });
       
       showToast.success('Password has been reset successfully!');
       navigate('/login');

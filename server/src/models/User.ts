@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 export type UserRole = 'customer' | 'technician' | 'admin';
 
@@ -14,9 +15,12 @@ export interface IUser extends Document {
   isVerified: boolean;
   googleId?: string;
   refreshToken?: string;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  createPasswordResetToken(): string;
 }
 
 const userSchema = new Schema<IUser>(
@@ -65,6 +69,8 @@ const userSchema = new Schema<IUser>(
       type: String,
       select: false,
     },
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
   {
     timestamps: true,
@@ -87,6 +93,21 @@ userSchema.pre<IUser>('save', async function () {
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   if (!this.password) return false;
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Generate password reset OTP
+userSchema.methods.createPasswordResetToken = function (): string {
+  const resetOtp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+  
+  // Hash it for DB storage
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetOtp)
+    .digest('hex');
+    
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  
+  return resetOtp;
 };
 
 export const User = mongoose.model<IUser>('User', userSchema);

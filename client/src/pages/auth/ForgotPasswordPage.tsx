@@ -16,8 +16,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      // In a real app, this would hit /api/auth/forgot-password
-      await axios.post('/api/auth/send-otp', { email });
+      await axios.post('/api/auth/forgot-password', { email });
       
       setIsSent(true);
       showToast.success('Password reset instructions sent to your email.');
