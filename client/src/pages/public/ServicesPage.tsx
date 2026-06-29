@@ -53,21 +53,26 @@ export default function ServicesPage() {
   }, []);
 
   const filteredServices = services.filter(s => {
-    if (activeCategory === 'all') return true;
-    // Find the active category object from our loaded list
-    const activeCat = categories.find((c: any) => c.slug === activeCategory);
-    const matchesCat =
-      s.category?.slug === activeCategory ||
-      String(s.category?._id) === activeCategory ||
-      (activeCat && (
-        String(s.category?._id) === String(activeCat._id) ||
-        (s.category?.name || '').toLowerCase() === (activeCat.name || '').toLowerCase()
-      ));
+    let matchesCat = false;
+    if (activeCategory === 'all') {
+      matchesCat = true;
+    } else {
+      const activeCat = categories.find((c: any) => c.slug === activeCategory);
+      matchesCat =
+        s.category?.slug === activeCategory ||
+        String(s.category?._id) === activeCategory ||
+        (activeCat && (
+          String(s.category?._id) === String(activeCat._id) ||
+          (s.category?.name || '').toLowerCase() === (activeCat.name || '').toLowerCase()
+        ));
+    }
+    
     const q = searchQuery.toLowerCase();
     const matchesSearch = !q
       || s.name.toLowerCase().includes(q)
       || (s.description || '').toLowerCase().includes(q)
       || (s.category?.name || '').toLowerCase().includes(q);
+      
     return matchesCat && matchesSearch;
   });
 
