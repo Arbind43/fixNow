@@ -10,8 +10,8 @@ let razorpayInstance: any = null;
 const getRazorpay = () => {
   if (!razorpayInstance) {
     razorpayInstance = new Razorpay({
-      key_id:     process.env.RAZORPAY_KEY_ID     || 'rzp_test_dummy_key',
-      key_secret: process.env.RAZORPAY_KEY_SECRET || 'rzp_test_dummy_secret',
+      key_id:     process.env.RAZORPAY_KEY_ID     || 'rzp_test_TYs078fQxI4x6O',
+      key_secret: process.env.RAZORPAY_KEY_SECRET || 'w8z85fNlE2Uj6b5g5n4q8f4x',
     });
   }
   return razorpayInstance;
@@ -41,34 +41,8 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
       totalAmount = booking.totalAmount;
     }
 
-    // In test/dev mode return a mock order so the whole flow can be tested end-to-end
-    if (isTestMode()) {
-      const mockOrderId = `order_mock_${Date.now()}`;
-      console.log('⚠️ TEST MODE: Returning mock Razorpay order');
-
-      // Still record the payment in DB
-      if (bookingId && bookingId !== 'mock') {
-        await Payment.create({
-          booking:         bookingId,
-          customer:        req.user?.id,
-          razorpayOrderId: mockOrderId,
-          amount:          totalAmount,
-          currency:        'INR',
-          status:          'created',
-        }).catch(() => {}); // Don't fail if Payment model has issues
-      }
-
-      return res.status(200).json({
-        success: true,
-        data: {
-          orderId:  mockOrderId,
-          amount:   totalAmount * 100,
-          currency: 'INR',
-          keyId:    process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy_key',
-          isMock:   true,
-        },
-      });
-    }
+    // We no longer bypass Razorpay in test mode. We want the real UI to appear.
+    // If the user hasn't provided valid Razorpay keys, this will naturally throw an error.
 
     // Production: real Razorpay order
     const options = {
@@ -97,7 +71,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
         orderId:  order.id,
         amount:   order.amount,
         currency: order.currency,
-        keyId:    process.env.RAZORPAY_KEY_ID,
+        keyId:    process.env.RAZORPAY_KEY_ID || 'rzp_test_TYs078fQxI4x6O',
         isMock:   false,
       },
     });

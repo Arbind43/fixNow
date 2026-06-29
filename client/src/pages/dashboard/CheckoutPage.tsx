@@ -75,17 +75,7 @@ export default function CheckoutPage() {
       });
       const { orderId, amount, currency, keyId, isMock } = orderRes.data.data;
 
-      if (isMock) {
-        await axios.post('/api/payments/verify', {
-          razorpay_order_id:   orderId,
-          razorpay_payment_id: 'mock_payment_id',
-          razorpay_signature:  'mock_signature',
-          bookingId,
-        });
-        showToast.success('🎉 Payment successful! Booking confirmed.');
-        navigate('/dashboard/payment-success', { state: { bookingId } });
-        return;
-      }
+      // We no longer bypass the UI in mock mode. The Razorpay modal will open.
 
       const options = {
         key: keyId, amount, currency,

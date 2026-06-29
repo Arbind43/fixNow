@@ -178,18 +178,7 @@ export default function BookingPage() {
 
       const { orderId, amount, currency, keyId, isMock } = orderRes.data.data;
 
-      // 4️⃣ Mock / Test mode — skip real Razorpay modal
-      if (isMock) {
-        await axios.post('/api/payments/verify', {
-          razorpay_order_id:   orderId,
-          razorpay_payment_id: 'mock_payment_id',
-          razorpay_signature:  'mock_signature',
-          bookingId:           realBookingId,
-        });
-        showToast.success('🎉 Booking confirmed & payment processed!');
-        navigate('/dashboard/payment-success', { state: { bookingId: realBookingId } });
-        return;
-      }
+      // We no longer bypass the UI in mock mode. The Razorpay modal will open.
 
       // 5️⃣ Real Razorpay modal
       const options = {
