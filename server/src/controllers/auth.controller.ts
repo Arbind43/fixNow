@@ -192,7 +192,7 @@ export const mockGoogleAuth = async (req: Request, res: Response, next: NextFunc
     const accessToken = generateAccessToken(user._id, user.role);
     
     // Redirect to the frontend with the token
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const clientUrl = process.env.CLIENT_URL || 'https://fix-now-git-main-mundaarbind73-4443s-projects.vercel.app';
     res.redirect(`${clientUrl}/login?token=${accessToken}`);
   } catch (error) {
     next(error);
