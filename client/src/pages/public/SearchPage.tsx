@@ -54,9 +54,15 @@ export default function SearchPage() {
         let services: any[]     = [];
         let technicians: any[]  = [];
         try {
-          const techUrl = userLocation 
-            ? `/api/technicians?lat=${userLocation.lat}&lng=${userLocation.lng}` 
-            : '/api/technicians';
+          // Build technician URL with location AND search keyword
+          const techParams = new URLSearchParams();
+          if (userLocation) {
+            techParams.set('lat', userLocation.lat.toString());
+            techParams.set('lng', userLocation.lng.toString());
+          }
+          if (query) techParams.set('search', query);
+          
+          const techUrl = `/api/technicians?${techParams.toString()}`;
             
           const [sRes, tRes] = await Promise.all([axios.get('/api/services'), axios.get(techUrl)]);
           services    = sRes.data.data || [];
@@ -329,7 +335,10 @@ export default function SearchPage() {
                                       <span className="text-white/40 font-normal">({tech.reviewsCount} reviews)</span>
                                     </span>
                                     <span className="flex items-center gap-1">
-                                      <MapPin size={13} /> {tech.serviceRadius} km away
+                                      <MapPin size={13} />
+                                      {tech.distanceInKm != null
+                                        ? `${tech.distanceInKm.toFixed(1)} km away`
+                                        : tech.address?.city || 'Nearby'}
                                     </span>
                                   </div>
                                   <div className="flex gap-2 flex-wrap">

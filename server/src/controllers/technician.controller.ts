@@ -6,11 +6,12 @@ import mongoose from 'mongoose';
 
 export const getTechnicians = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const lat     = req.query.lat     ? parseFloat(req.query.lat as string)     : undefined;
-    const lng     = req.query.lng     ? parseFloat(req.query.lng as string)     : undefined;
-    const city    = req.query.city    as string | undefined;
-    const pincode = req.query.pincode as string | undefined;
-    const serviceId = req.query.service as string | undefined;
+    const lat       = req.query.lat       ? parseFloat(req.query.lat as string)     : undefined;
+    const lng       = req.query.lng       ? parseFloat(req.query.lng as string)     : undefined;
+    const city      = req.query.city      as string | undefined;
+    const pincode   = req.query.pincode   as string | undefined;
+    const serviceId = req.query.service   as string | undefined;
+    const search    = req.query.search    as string | undefined; // NEW: category/service name search
 
     let technicians: any[] = [];
 
@@ -79,6 +80,18 @@ export const getTechnicians = async (req: Request, res: Response, next: NextFunc
         .populate('categories', 'name slug')
         .populate('services', 'name slug')
         .lean();
+    }
+
+    // ─── POST-FILTER: category / service name keyword search ────────────────
+    if (search && search.trim()) {
+      const keywords = search.toLowerCase().trim().split(/\s+/);
+      technicians = technicians.filter((t: any) => {
+        const catNames  = (t.categories || []).map((c: any) => (c.name || '').toLowerCase()).join(' ');
+        const svcNames  = (t.services   || []).map((s: any) => (s.name || '').toLowerCase()).join(' ');
+        const userName  = (t.user?.name || '').toLowerCase();
+        const searchStr = `${catNames} ${svcNames} ${userName}`;
+        return keywords.some((kw: string) => searchStr.includes(kw));
+      });
     }
 
     res.status(200).json({ success: true, count: technicians.length, data: technicians });
