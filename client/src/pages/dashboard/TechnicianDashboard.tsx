@@ -17,7 +17,7 @@ export default function TechnicianDashboard() {
 
   const fetchProfile = async (silent = false) => {
     try {
-      const res = await axios.get('/api/technician/me/profile');
+      const res = await axios.get('/api/technicians/me/profile');
       setProfile(res.data.data);
     } catch {
       if (!silent) showToast.error('Failed to load profile');
@@ -62,7 +62,7 @@ export default function TechnicianDashboard() {
       Object.entries(reapplyFiles).forEach(([key, file]) => {
         if (file) form.append(key, file);
       });
-      await axios.post('/api/technician/me/reapply', form, {
+      await axios.post('/api/technicians/me/reapply', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       showToast.success('Re-application submitted! You will be notified once reviewed.');
