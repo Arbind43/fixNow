@@ -13,6 +13,8 @@ export interface IUser extends Document {
   avatar?: string;
   role: UserRole;
   isVerified: boolean;
+  isBanned: boolean;
+  isSuspended: boolean;
   googleId?: string;
   refreshToken?: string;
   passwordResetToken?: string;
@@ -59,6 +61,14 @@ const userSchema = new Schema<IUser>(
       default: 'customer',
     },
     isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+    isSuspended: {
       type: Boolean,
       default: false,
     },

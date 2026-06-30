@@ -16,7 +16,8 @@ app.set('io', io);
 
 const startServer = async () => {
   try {
-    // Connect to MongoDB
+    // Bypassing ISP DNS block for SRV records using Google DNS
+    require('dns').setServers(['8.8.8.8']);
     const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fixnow';
     await mongoose.connect(MONGO_URI);
     console.log(`✅ MongoDB Connected: ${mongoose.connection.host}`);

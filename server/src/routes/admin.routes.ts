@@ -1,13 +1,37 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { getDashboardMetrics } from '../controllers/admin.controller';
 import { protect } from '../middleware/auth.middleware';
+import {
+  getDashboardMetrics,
+  getAllUsers,
+  getUserById,
+  updateUserStatus,
+  deleteUser,
+  getAllTechnicians,
+  getTechnicianById,
+  updateTechnicianVerification,
+  deleteTechnician,
+  getAllBookings,
+  updateBooking,
+  getAllComplaints,
+  updateComplaint,
+  getAllReviews,
+  updateReview,
+  getAllPayments,
+  getSettings,
+  updateSettings,
+  getAuditLogs,
+  sendAdminNotification,
+  generateReport,
+  adminCreateCategory,
+  adminUpdateCategory,
+  adminDeleteCategory,
+} from '../controllers/admin.controller';
 
 const router = express.Router();
 
-// Only admin can access these routes
+// ── Admin-only guard ──────────────────────────────────────────────────────────
 router.use(protect as any);
 
-// Inline admin role guard
 const adminOnly = (req: Request, res: Response, next: NextFunction) => {
   if ((req as any).user?.role !== 'admin') {
     return res.status(403).json({ success: false, message: 'Access denied. Admins only.' });
@@ -15,6 +39,54 @@ const adminOnly = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-router.get('/metrics', adminOnly, getDashboardMetrics);
+router.use(adminOnly);
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+router.get('/metrics', getDashboardMetrics);
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+router.get('/users',              getAllUsers);
+router.get('/users/:id',          getUserById);
+router.patch('/users/:id/status', updateUserStatus);
+router.delete('/users/:id',       deleteUser);
+
+// ── Technicians (Professionals) ───────────────────────────────────────────────
+router.get('/technicians',              getAllTechnicians);
+router.get('/technicians/:id',          getTechnicianById);
+router.patch('/technicians/:id/verify', updateTechnicianVerification);
+router.delete('/technicians/:id',       deleteTechnician);
+
+// ── Bookings ──────────────────────────────────────────────────────────────────
+router.get('/bookings',              getAllBookings);
+router.patch('/bookings/:id/action', updateBooking);
+
+// ── Complaints ────────────────────────────────────────────────────────────────
+router.get('/complaints',              getAllComplaints);
+router.patch('/complaints/:id/action', updateComplaint);
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+router.get('/reviews',              getAllReviews);
+router.patch('/reviews/:id/action', updateReview);
+
+// ── Payments ──────────────────────────────────────────────────────────────────
+router.get('/payments', getAllPayments);
+
+// ── Platform Settings ─────────────────────────────────────────────────────────
+router.get('/settings', getSettings);
+router.put('/settings', updateSettings);
+
+// ── Audit Logs ────────────────────────────────────────────────────────────────
+router.get('/audit-logs', getAuditLogs);
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+router.post('/notifications/send', sendAdminNotification);
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+router.get('/reports', generateReport);
+
+// ── Categories (admin CRUD) ───────────────────────────────────────────────────
+router.post('/categories',       adminCreateCategory);
+router.patch('/categories/:id',  adminUpdateCategory);
+router.delete('/categories/:id', adminDeleteCategory);
 
 export default router;

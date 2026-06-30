@@ -173,27 +173,74 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-export const mockGoogleAuth = async (req: Request, res: Response, next: NextFunction) => {
+import { OAuth2Client } from 'google-auth-library';
+
+export const googleAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // For demonstration, we simply find the first customer in the DB and log them in
-    let user = await User.findOne({ role: 'customer' });
+    const { access_token } = req.body;
+    
+    if (!access_token) {
+      return next(new AppError('No access token provided', 400));
+    }
+
+    // Google uses an access_token here because we used useGoogleLogin on frontend, 
+    // which does implicit flow and returns an access_token. We need to fetch user info.
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    
+    if (!response.ok) {
+      return next(new AppError('Failed to fetch user info from Google', 401));
+    }
+    
+    const payload = await response.json();
+    const email = payload.email;
+    const name = payload.name || 'Google User';
+    const avatar = payload.picture;
+
+    if (!email) {
+      return next(new AppError('Google account does not have an email', 400));
+    }
+
+    let user = await User.findOne({ email });
     
     if (!user) {
-      // Create a dummy google user if none exist
       user = await User.create({
-        name: 'Google User',
-        email: 'googleuser@example.com',
-        password: 'Password123!', // Required by schema
+        name,
+        email,
+        password: crypto.randomBytes(16).toString('hex'), // Random password
         role: 'customer',
-        isVerified: true
+        isVerified: true,
+        avatar,
       });
+    } else {
+      // Optionally update avatar if they already exist
+      if (avatar && !user.avatar) {
+        user.avatar = avatar;
+        await user.save({ validateBeforeSave: false });
+      }
     }
 
     const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id);
     
-    // Redirect to the frontend with the token
-    const clientUrl = process.env.CLIENT_URL || 'https://fix-now-git-main-mundaarbind73-4443s-projects.vercel.app';
-    res.redirect(`${clientUrl}/login?token=${accessToken}`);
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+        },
+        accessToken,
+        refreshToken,
+      },
+    });
   } catch (error) {
     next(error);
   }

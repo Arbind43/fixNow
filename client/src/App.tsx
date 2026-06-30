@@ -27,7 +27,6 @@ const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage'));
 
 const CustomerDashboard = lazy(() => import('@/pages/dashboard/CustomerDashboard'));
 const TechnicianDashboard = lazy(() => import('@/pages/dashboard/TechnicianDashboard'));
-const AdminDashboard = lazy(() => import('@/pages/dashboard/AdminDashboard'));
 const BookingPage = lazy(() => import('@/pages/dashboard/BookingPage'));
 const PaymentSuccessPage = lazy(() => import('@/pages/dashboard/PaymentSuccessPage'));
 const CustomerBookingsPage = lazy(() => import('@/pages/dashboard/CustomerBookingsPage'));
@@ -45,6 +44,21 @@ const MessagesPage = lazy(() => import('@/pages/dashboard/MessagesPage'));
 const TechnicianRegisterPage = lazy(() => import('@/pages/auth/TechnicianRegisterPage'));
 const TechnicianJobRequestsPage = lazy(() => import('@/pages/dashboard/TechnicianJobRequestsPage'));
 const TechnicianSchedulePage = lazy(() => import('@/pages/dashboard/TechnicianSchedulePage'));
+
+// Admin Pages
+const AdminOverview             = lazy(() => import('@/pages/admin/AdminOverview'));
+const AdminUserManagement       = lazy(() => import('@/pages/admin/UserManagement'));
+const ProfessionalVerification  = lazy(() => import('@/pages/admin/ProfessionalVerification'));
+const ProfessionalManagement    = lazy(() => import('@/pages/admin/ProfessionalManagement'));
+const AdminBookingManagement    = lazy(() => import('@/pages/admin/BookingManagement'));
+const AdminComplaintManagement  = lazy(() => import('@/pages/admin/ComplaintManagement'));
+const AdminReviewsManagement    = lazy(() => import('@/pages/admin/ReviewsManagement'));
+const AdminPaymentManagement    = lazy(() => import('@/pages/admin/PaymentManagement'));
+const AdminServicesManagement   = lazy(() => import('@/pages/admin/ServicesManagement'));
+const AdminNotificationsCenter  = lazy(() => import('@/pages/admin/NotificationsCenter'));
+const AdminReportsPage          = lazy(() => import('@/pages/admin/ReportsPage'));
+const AdminPlatformSettings     = lazy(() => import('@/pages/admin/PlatformSettings'));
+const AdminAuditLogs            = lazy(() => import('@/pages/admin/AuditLogs'));
 
 // Guards
 import { ProtectedRoute, RoleRoute } from '@/components/layout/ProtectedRoutes';
@@ -119,7 +133,23 @@ export default function App() {
         <Route path="/technician/dashboard" element={<TechnicianDashboard />} />
         <Route path="/dashboard/requests" element={<TechnicianJobRequestsPage />} />
         <Route path="/dashboard/schedule" element={<TechnicianSchedulePage />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+
+        {/* Admin Routes — role-guarded */}
+        <Route element={<RoleRoute allowedRoles={['admin']} />}>
+          <Route path="/admin"               element={<AdminOverview />} />
+          <Route path="/admin/users"         element={<AdminUserManagement />} />
+          <Route path="/admin/verification"  element={<ProfessionalVerification />} />
+          <Route path="/admin/professionals" element={<ProfessionalManagement />} />
+          <Route path="/admin/bookings"      element={<AdminBookingManagement />} />
+          <Route path="/admin/complaints"    element={<AdminComplaintManagement />} />
+          <Route path="/admin/reviews"       element={<AdminReviewsManagement />} />
+          <Route path="/admin/payments"      element={<AdminPaymentManagement />} />
+          <Route path="/admin/services"      element={<AdminServicesManagement />} />
+          <Route path="/admin/notifications" element={<AdminNotificationsCenter />} />
+          <Route path="/admin/reports"       element={<AdminReportsPage />} />
+          <Route path="/admin/settings"      element={<AdminPlatformSettings />} />
+          <Route path="/admin/audit-logs"    element={<AdminAuditLogs />} />
+        </Route>
       </Route>
       
       {/* Fallback 404 */}

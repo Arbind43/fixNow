@@ -62,6 +62,18 @@
     --color-warning: #f59e0b;
     --color-error: #ef4444;
     --color-info: #3b82f6;
+
+    /* Admin Panel Variables (light) */
+    --admin-bg:           #f1f5f9;
+    --admin-sidebar-bg:   #0f172a;
+    --admin-topbar-bg:    rgba(255,255,255,0.85);
+    --admin-border:       rgba(255,255,255,0.08);
+    --admin-text-primary: #f8fafc;
+    --admin-text-secondary: #cbd5e1;
+    --admin-text-muted:   #64748b;
+    --admin-hover-bg:     rgba(255,255,255,0.08);
+    --admin-card-bg:      #ffffff;
+    --admin-card-border:  #e2e8f0;
   }
 
   .dark {
@@ -87,6 +99,18 @@
 
     /* Dark mode glass */
     --bg-glass-strong: rgba(9, 9, 11, 0.85);
+
+    /* Admin Panel Variables (dark) */
+    --admin-bg:           #0d1117;
+    --admin-sidebar-bg:   #0a0f1a;
+    --admin-topbar-bg:    rgba(13,17,23,0.85);
+    --admin-border:       rgba(255,255,255,0.06);
+    --admin-text-primary: #f0f6ff;
+    --admin-text-secondary: #8b949e;
+    --admin-text-muted:   #484f58;
+    --admin-hover-bg:     rgba(255,255,255,0.06);
+    --admin-card-bg:      #161b22;
+    --admin-card-border:  #30363d;
   }
 }
 

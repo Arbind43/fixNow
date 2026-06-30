@@ -70,8 +70,10 @@ export interface ITechnicianProfile extends Document {
     emergencyCharge: number;
   };
 
-  verificationStatus: 'pending' | 'verified' | 'rejected';
+  verificationStatus: 'pending' | 'verified' | 'rejected' | 'suspended';
   rejectionReason?: string;
+  verificationNotes?: string;
+  suspendedReason?: string;
   portfolio: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -155,10 +157,12 @@ const technicianProfileSchema = new Schema<ITechnicianProfile>(
 
     verificationStatus: {
       type: String,
-      enum: ['pending', 'verified', 'rejected'],
-      default: 'verified',
+      enum: ['pending', 'verified', 'rejected', 'suspended'],
+      default: 'pending',
     },
     rejectionReason: { type: String, default: '' },
+    verificationNotes: { type: String, default: '' },
+    suspendedReason: { type: String, default: '' },
     portfolio: [String],
   },
   { timestamps: true }

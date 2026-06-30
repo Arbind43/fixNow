@@ -6,6 +6,8 @@ export interface IReview extends Document {
   technician: Types.ObjectId; // TechnicianProfile _id
   rating:     number;
   comment:    string;
+  isHidden:   boolean;
+  isReported: boolean;
   createdAt:  Date;
   updatedAt:  Date;
 }
@@ -39,6 +41,14 @@ const reviewSchema = new Schema<IReview>(
       trim:      true,
       maxlength: [500, 'Review cannot exceed 500 characters'],
       default:   '',
+    },
+    isHidden: {
+      type:    Boolean,
+      default: false,
+    },
+    isReported: {
+      type:    Boolean,
+      default: false,
     },
   },
   { timestamps: true }
