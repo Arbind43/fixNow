@@ -40,6 +40,41 @@ export default function TechnicianDashboard() {
   }
 
   // ── Full-page block for unverified accounts ──────────────────────────────────
+  // ── State for re-apply form ──────────────────────────────────────────────────
+  const [showReapply, setShowReapply]     = useState(false);
+  const [reapplyNote, setReapplyNote]     = useState('');
+  const [reapplyFiles, setReapplyFiles]   = useState<Record<string, File | null>>({});
+  const [submitting, setSubmitting]       = useState(false);
+
+  const handleReapplyFile = (field: string, file: File | null) => {
+    setReapplyFiles(prev => ({ ...prev, [field]: file }));
+  };
+
+  const submitReapply = async () => {
+    if (!reapplyNote.trim()) {
+      showToast.error('Please add a note explaining what you have updated.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const form = new FormData();
+      form.append('reapplyNote', reapplyNote);
+      Object.entries(reapplyFiles).forEach(([key, file]) => {
+        if (file) form.append(key, file);
+      });
+      await axios.post('/api/technician/me/reapply', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      showToast.success('Re-application submitted! You will be notified once reviewed.');
+      await fetchProfile();       // refresh to show pending state immediately
+      setShowReapply(false);
+    } catch (err: any) {
+      showToast.error(err?.response?.data?.message || 'Submission failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (!profile || profile.verificationStatus !== 'verified') {
     const status = profile?.verificationStatus || 'pending';
     const isPending   = status === 'pending';
@@ -50,7 +85,9 @@ export default function TechnicianDashboard() {
 
     return (
       <DashboardLayout>
-        <div className="max-w-3xl mx-auto mt-12 space-y-4">
+        <div className="max-w-3xl mx-auto mt-12 space-y-6">
+
+          {/* Status Card */}
           <Card className="p-10 text-center flex flex-col items-center">
             <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${iconBg}`}>
               {isPending ? <Clock size={40} /> : <AlertCircle size={40} />}
@@ -71,20 +108,16 @@ export default function TechnicianDashboard() {
               )}
               {isRejected && (
                 profile?.rejectionReason
-                  ? `Your application was rejected. Reason: "${profile.rejectionReason}". Please address these issues and contact support.`
-                  : 'Unfortunately your application did not meet requirements. Please contact support.'
+                  ? `Your application was rejected. Reason: "${profile.rejectionReason}".`
+                  : 'Unfortunately your application did not meet our requirements at this time.'
               )}
             </p>
 
-            {/* Show "docs requested" message even on pending screen */}
+            {/* Docs requested banner */}
             {profile?.docsRequested && (
               <div className="w-full mb-6 p-4 rounded-xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-left">
                 <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 mb-1">📄 Admin has requested additional documents:</p>
                 <p className="text-sm text-amber-600 dark:text-amber-300">{profile.docsRequested}</p>
-                <Link to="/dashboard/technician/profile"
-                  className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors">
-                  <Upload size={14} /> Upload Documents
-                </Link>
               </div>
             )}
 
@@ -92,10 +125,117 @@ export default function TechnicianDashboard() {
               You cannot accept new bookings or go online while your account is <strong>{status}</strong>.
             </div>
 
+            {/* Re-apply button — only for rejected */}
+            {isRejected && !showReapply && (
+              <button
+                onClick={() => setShowReapply(true)}
+                className="mt-6 px-6 py-3 rounded-xl font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+              >
+                🔄 Re-Apply for Verification
+              </button>
+            )}
+
             <button onClick={() => fetchProfile()} className="mt-4 flex items-center gap-2 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors">
               <RefreshCw size={12} /> Check status again
             </button>
           </Card>
+
+          {/* Re-Apply Form */}
+          {isRejected && showReapply && (
+            <Card className="p-8 space-y-6">
+              <div>
+                <h2 className="text-xl font-bold text-[var(--text-primary)]">📋 Re-Apply for Verification</h2>
+                <p className="text-sm text-[var(--text-secondary)] mt-1">
+                  Address the rejection reason and upload any updated or missing documents below. Only re-upload the files that have changed — unchanged documents are kept automatically.
+                </p>
+              </div>
+
+              {/* Rejection reason reminder */}
+              {profile?.rejectionReason && (
+                <div className="p-4 rounded-xl border border-red-300 bg-red-50 dark:bg-red-900/20">
+                  <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">⚠️ Admin Rejection Reason:</p>
+                  <p className="text-sm text-red-600 dark:text-red-300">{profile.rejectionReason}</p>
+                </div>
+              )}
+
+              {/* Document uploads */}
+              <div>
+                <p className="text-sm font-semibold text-[var(--text-primary)] mb-3">Upload Updated Documents</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { field: 'aadhaarCard',      label: 'Aadhaar Card',        current: profile?.documents?.aadhaarUrl },
+                    { field: 'panCard',           label: 'PAN Card',            current: profile?.documents?.panUrl },
+                    { field: 'drivingLicense',    label: 'Driving License',     current: profile?.documents?.licenseUrl },
+                    { field: 'tradeCertificate',  label: 'Trade Certificate',   current: profile?.documents?.certificateUrl },
+                    { field: 'profilePhoto',      label: 'Profile Photo',       current: profile?.documents?.profilePhoto },
+                  ].map(({ field, label, current }) => (
+                    <div key={field} className="space-y-1">
+                      <label className="text-xs font-medium text-[var(--text-secondary)]">{label}</label>
+                      <div className="flex flex-col gap-1">
+                        {current && (
+                          <span className="text-xs text-green-600 dark:text-green-400">✓ Current file on record</span>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={e => handleReapplyFile(field, e.target.files?.[0] || null)}
+                          className="text-xs w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-[var(--color-primary-600)] file:text-white hover:file:opacity-90 cursor-pointer"
+                        />
+                        {reapplyFiles[field] && (
+                          <span className="text-xs text-[var(--color-primary-600)]">📎 {reapplyFiles[field]!.name}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Note to admin */}
+              <div>
+                <label className="text-sm font-semibold text-[var(--text-primary)] block mb-2">
+                  Message to Admin <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={reapplyNote}
+                  onChange={e => setReapplyNote(e.target.value)}
+                  placeholder="Explain what changes you've made to address the rejection reason (e.g., 'I have uploaded a clearer Aadhaar card and corrected my address details...')"
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl border text-sm outline-none resize-none transition-colors"
+                  style={{
+                    background: 'var(--bg-elevated)',
+                    borderColor: reapplyNote ? 'var(--color-primary-500)' : 'var(--border-primary)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+                <p className="text-xs text-[var(--text-tertiary)] mt-1">{reapplyNote.length}/500 characters</p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={submitReapply}
+                  disabled={submitting || !reapplyNote.trim()}
+                  className="flex-1 py-3 px-6 rounded-xl font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 active:scale-[0.98]"
+                  style={{ background: submitting ? '#9ca3af' : 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                >
+                  {submitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      Submitting...
+                    </span>
+                  ) : '🚀 Submit Re-Application'}
+                </button>
+                <button
+                  onClick={() => setShowReapply(false)}
+                  className="px-6 py-3 rounded-xl font-medium border transition-colors"
+                  style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </Card>
+          )}
         </div>
       </DashboardLayout>
     );

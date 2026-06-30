@@ -222,3 +222,66 @@ export const getMyProfile = async (req: Request, res: Response, next: NextFuncti
     next(error);
   }
 };
+
+// ─── POST /api/technician/reapply ─────────────────────────────────────────────
+// Allows a REJECTED technician to re-submit for verification with updated docs/info.
+export const reapplyForVerification = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const profile = await TechnicianProfile.findOne({ user: req.user?.id });
+    if (!profile) return next(new AppError('Technician profile not found', 404));
+
+    // Only rejected technicians may re-apply
+    if (profile.verificationStatus !== 'rejected') {
+      return next(new AppError('Re-application is only available for rejected profiles', 400));
+    }
+
+    const files = req.files as { [fieldname: string]: any[] } | undefined;
+    const fileUrl = (field: string) =>
+      files?.[field]?.[0] ? `/uploads/${files[field][0].filename}` : null;
+
+    // Update any newly uploaded documents (keep existing if not re-uploaded)
+    const aadhaarUrl     = fileUrl('aadhaarCard');
+    const panUrl         = fileUrl('panCard');
+    const licenseUrl     = fileUrl('drivingLicense');
+    const certUrl        = fileUrl('tradeCertificate');
+    const profilePhoto   = fileUrl('profilePhoto');
+
+    const $set: Record<string, any> = {
+      verificationStatus: 'pending',
+      rejectionReason: '',   // clear the old rejection reason
+    };
+    if (aadhaarUrl)   $set['documents.aadhaarUrl']     = aadhaarUrl;
+    if (panUrl)       $set['documents.panUrl']          = panUrl;
+    if (licenseUrl)   $set['documents.licenseUrl']      = licenseUrl;
+    if (certUrl)      $set['documents.certificateUrl']  = certUrl;
+    if (profilePhoto) $set['documents.profilePhoto']    = profilePhoto;
+
+    // Merge any updated text fields from body
+    const { bio, skills, experienceYears, reapplyNote } = req.body;
+    if (bio)             $set['bio']             = bio;
+    if (experienceYears) $set['experienceYears'] = Number(experienceYears);
+    if (skills)          $set['skills']          = Array.isArray(skills) ? skills : skills.split(',').map((s: string) => s.trim());
+    if (reapplyNote)     $set['verificationNotes'] = `Re-apply note: ${reapplyNote}`;
+
+    await TechnicianProfile.findOneAndUpdate({ user: req.user?.id }, { $set }, { new: true });
+
+    // Notify the technician that their re-application is received
+    const { Notification } = await import('../models/Notification');
+    await Notification.create({
+      user:    req.user?.id,
+      title:   '🔄 Re-Application Submitted',
+      message: 'Your re-application for verification has been received. Our admin team will review your updated documents and notify you within 24–48 hours.',
+      type:    'system',
+      link:    '/dashboard/technician',
+      read:    false,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Re-application submitted successfully! Your profile is now under review.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
