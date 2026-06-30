@@ -230,9 +230,9 @@ export const reapplyForVerification = async (req: Request, res: Response, next: 
     const profile = await TechnicianProfile.findOne({ user: req.user?.id });
     if (!profile) return next(new AppError('Technician profile not found', 404));
 
-    // Only rejected technicians may re-apply
-    if (profile.verificationStatus !== 'rejected') {
-      return next(new AppError('Re-application is only available for rejected profiles', 400));
+    // Only rejected technicians, OR pending technicians who were asked for docs, may re-apply
+    if (profile.verificationStatus !== 'rejected' && !(profile.verificationStatus === 'pending' && profile.docsRequested)) {
+      return next(new AppError('Re-application is only available for rejected profiles or if additional documents were requested', 400));
     }
 
     const files = req.files as { [fieldname: string]: any[] } | undefined;
@@ -249,6 +249,7 @@ export const reapplyForVerification = async (req: Request, res: Response, next: 
     const $set: Record<string, any> = {
       verificationStatus: 'pending',
       rejectionReason: '',   // clear the old rejection reason
+      docsRequested: '',     // clear the pending doc request
     };
     if (aadhaarUrl)   $set['documents.aadhaarUrl']     = aadhaarUrl;
     if (panUrl)       $set['documents.panUrl']          = panUrl;

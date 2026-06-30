@@ -125,14 +125,14 @@ export default function TechnicianDashboard() {
               You cannot accept new bookings or go online while your account is <strong>{status}</strong>.
             </div>
 
-            {/* Re-apply button — only for rejected */}
-            {isRejected && !showReapply && (
+            {/* Re-apply button — for rejected OR when docs are requested */}
+            {(isRejected || profile?.docsRequested) && !showReapply && (
               <button
                 onClick={() => setShowReapply(true)}
                 className="mt-6 px-6 py-3 rounded-xl font-semibold text-white transition-all hover:opacity-90 active:scale-95"
                 style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
               >
-                🔄 Re-Apply for Verification
+                {isRejected ? '🔄 Re-Apply for Verification' : '📤 Upload Requested Documents'}
               </button>
             )}
 
@@ -142,12 +142,17 @@ export default function TechnicianDashboard() {
           </Card>
 
           {/* Re-Apply Form */}
-          {isRejected && showReapply && (
+          {(isRejected || profile?.docsRequested) && showReapply && (
             <Card className="p-8 space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-[var(--text-primary)]">📋 Re-Apply for Verification</h2>
+                <h2 className="text-xl font-bold text-[var(--text-primary)]">
+                  {isRejected ? '📋 Re-Apply for Verification' : '📋 Upload Requested Documents'}
+                </h2>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  Address the rejection reason and upload any updated or missing documents below. Only re-upload the files that have changed — unchanged documents are kept automatically.
+                  {isRejected 
+                    ? 'Address the rejection reason and upload any updated or missing documents below.' 
+                    : 'Upload the additional documents requested by the admin below.'}
+                  Only re-upload the files that have changed — unchanged documents are kept automatically.
                 </p>
               </div>
 
