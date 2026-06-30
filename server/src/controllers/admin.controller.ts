@@ -337,33 +337,66 @@ export const updateTechnicianVerification = async (req: Request, res: Response, 
     if (!tech) return res.status(404).json({ success: false, message: 'Technician not found' });
 
     let auditAction: any;
+    let notifTitle  = '';
+    let notifMsg    = '';
+    let notifLink   = '/dashboard/technician';
 
     switch (action) {
       case 'approve':
         tech.verificationStatus = 'verified';
-        auditAction = 'APPROVE_TECHNICIAN';
+        tech.docsRequested      = '';   // clear any pending doc request
+        auditAction  = 'APPROVE_TECHNICIAN';
+        notifTitle   = '🎉 Verification Approved!';
+        notifMsg     = 'Congratulations! Your professional account has been verified. You can now go online and start accepting jobs.';
         break;
+
       case 'reject':
         tech.verificationStatus = 'rejected';
         tech.rejectionReason    = reason || '';
-        auditAction = 'REJECT_TECHNICIAN';
+        auditAction  = 'REJECT_TECHNICIAN';
+        notifTitle   = '❌ Verification Rejected';
+        notifMsg     = reason
+          ? `Your verification was rejected. Reason: ${reason}. Please contact support for more information.`
+          : 'Your verification was rejected. Please contact support for more information.';
         break;
+
       case 'suspend':
-        tech.verificationStatus = 'suspended';
-        (tech as any).suspendedReason = reason || '';
-        auditAction = 'SUSPEND_TECHNICIAN';
+        tech.verificationStatus          = 'suspended';
+        (tech as any).suspendedReason    = reason || '';
+        auditAction  = 'SUSPEND_TECHNICIAN';
+        notifTitle   = '⚠️ Account Suspended';
+        notifMsg     = reason
+          ? `Your account has been suspended. Reason: ${reason}. Please contact support.`
+          : 'Your account has been suspended. Please contact support for more information.';
         break;
+
       case 'reactivate':
         tech.verificationStatus = 'verified';
-        auditAction = 'ACTIVATE_TECHNICIAN';
+        (tech as any).suspendedReason = '';
+        auditAction  = 'ACTIVATE_TECHNICIAN';
+        notifTitle   = '✅ Account Reactivated';
+        notifMsg     = 'Your account has been reactivated. You can now go online and accept new jobs.';
         break;
+
       case 'request_docs':
-        auditAction = 'REQUEST_ADDITIONAL_DOCS';
+        tech.docsRequested = notes || reason || 'The admin has requested additional documents for verification.';
+        auditAction  = 'REQUEST_ADDITIONAL_DOCS';
+        notifTitle   = '📄 Additional Documents Required';
+        notifMsg     = notes || reason
+          ? `Admin message: ${notes || reason}`
+          : 'Please upload additional documents to complete your verification. Log in to your dashboard for details.';
+        notifLink = '/dashboard/technician/profile';
         break;
+
       case 'add_note':
         (tech as any).verificationNotes = notes || '';
-        auditAction = 'ADD_VERIFICATION_NOTE';
+        auditAction  = 'ADD_VERIFICATION_NOTE';
+        notifTitle   = '📝 Verification Note Added';
+        notifMsg     = notes
+          ? `Admin note: ${notes}`
+          : 'The admin has added a note to your verification.';
         break;
+
       default:
         return res.status(400).json({ success: false, message: 'Invalid action' });
     }
@@ -375,13 +408,23 @@ export const updateTechnicianVerification = async (req: Request, res: Response, 
       details:    reason || notes,
     });
 
-    // If approving, also mark the underlying User as verified
-    if (action === 'approve' && tech.user) {
+    // Sync isVerified on the User document
+    if (action === 'approve' || action === 'reactivate') {
       await User.findByIdAndUpdate(tech.user, { isVerified: true });
     } else if (action === 'suspend' || action === 'reject') {
       await User.findByIdAndUpdate(tech.user, { isVerified: false });
-    } else if (action === 'reactivate') {
-      await User.findByIdAndUpdate(tech.user, { isVerified: true });
+    }
+
+    // Send in-app notification to the technician's user account
+    if (notifTitle && tech.user) {
+      await Notification.create({
+        user:    tech.user,
+        title:   notifTitle,
+        message: notifMsg,
+        type:    'system',
+        link:    notifLink,
+        read:    false,
+      });
     }
 
     res.status(200).json({ success: true, message: `Technician ${action} successful`, data: tech });
@@ -389,6 +432,7 @@ export const updateTechnicianVerification = async (req: Request, res: Response, 
     next(error);
   }
 };
+
 
 export const deleteTechnician = async (req: Request, res: Response, next: NextFunction) => {
   try {

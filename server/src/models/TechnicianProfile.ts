@@ -74,6 +74,7 @@ export interface ITechnicianProfile extends Document {
   rejectionReason?: string;
   verificationNotes?: string;
   suspendedReason?: string;
+  docsRequested?: string;   // message from admin requesting additional documents
   portfolio: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -163,6 +164,7 @@ const technicianProfileSchema = new Schema<ITechnicianProfile>(
     rejectionReason: { type: String, default: '' },
     verificationNotes: { type: String, default: '' },
     suspendedReason: { type: String, default: '' },
+    docsRequested: { type: String, default: '' },
     portfolio: [String],
   },
   { timestamps: true }
