@@ -13,8 +13,11 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 
 function DocLink({ url, label }: { url?: string; label: string }) {
   if (!url) return <span className="text-xs italic" style={{ color: 'var(--text-tertiary)' }}>Not uploaded</span>;
+  const baseUrl = import.meta.env.VITE_API_URL || '';
+  const fullUrl = url.startsWith('/') ? `${baseUrl}${url}` : url;
+  
   return (
-    <a href={url} target="_blank" rel="noreferrer"
+    <a href={fullUrl} target="_blank" rel="noreferrer"
       className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg"
       style={{ background: '#e0e7ff', color: '#6366f1' }}>
       <FileText size={12} /> {label}
@@ -93,7 +96,7 @@ export default function ProfessionalVerification() {
               {/* Profile */}
               <div className="flex items-center gap-4">
                 {selected.documents?.profilePhoto ? (
-                  <img src={selected.documents.profilePhoto} alt="Profile"
+                  <img src={selected.documents.profilePhoto.startsWith('/') ? `${import.meta.env.VITE_API_URL || ''}${selected.documents.profilePhoto}` : selected.documents.profilePhoto} alt="Profile"
                     className="w-16 h-16 rounded-full object-cover border-2"
                     style={{ borderColor: 'var(--border-primary)' }} />
                 ) : (
@@ -285,7 +288,7 @@ export default function ProfessionalVerification() {
                   onClick={() => setSelected(t)}>
                   <div className="flex items-start gap-3 mb-4">
                     {t.documents?.profilePhoto ? (
-                      <img src={t.documents.profilePhoto} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+                      <img src={t.documents.profilePhoto.startsWith('/') ? `${import.meta.env.VITE_API_URL || ''}${t.documents.profilePhoto}` : t.documents.profilePhoto} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
                     ) : (
                       <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0"
                         style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>

@@ -1,11 +1,70 @@
-import { useState } from 'react';
-import { Wallet, Star, TrendingUp, CheckCircle, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Wallet, Star, TrendingUp, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { Card, Button, Badge } from '../../components/ui';
 import { showToast } from '../../components/ui/Toast';
+import axios from 'axios';
 
 export default function TechnicianDashboard() {
   const [isOnline, setIsOnline] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get('/api/technician/profile');
+        setProfile(res.data.data);
+      } catch (error) {
+        showToast.error('Failed to load profile');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[var(--color-primary-500)] border-t-transparent"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!profile || profile.verificationStatus !== 'verified') {
+    const status = profile?.verificationStatus || 'pending';
+    const isPending = status === 'pending';
+    const isSuspended = status === 'suspended';
+    const isRejected = status === 'rejected';
+
+    return (
+      <DashboardLayout>
+        <div className="max-w-3xl mx-auto mt-12">
+          <Card className="p-10 text-center flex flex-col items-center">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isPending ? 'bg-amber-100 text-amber-600' : isSuspended ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'}`}>
+              {isPending ? <Clock size={40} /> : <AlertCircle size={40} />}
+            </div>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+              {isPending && 'Verification Pending'}
+              {isSuspended && 'Account Suspended'}
+              {isRejected && 'Verification Rejected'}
+            </h1>
+            <p className="text-[var(--text-secondary)] max-w-md mx-auto mb-6">
+              {isPending && 'Your application has been received and is currently under review by our admin team. This usually takes 24-48 hours. You will be notified once verified.'}
+              {isSuspended && (profile?.suspendedReason ? `Your account has been suspended: ${profile.suspendedReason}. Please contact support.` : 'Your account has been temporarily suspended. Please contact support.')}
+              {isRejected && (profile?.rejectionReason ? `Your application was rejected: ${profile.rejectionReason}.` : 'Unfortunately, your application did not meet our requirements at this time.')}
+            </p>
+            <div className="p-4 bg-[var(--bg-secondary)] rounded-lg text-sm text-[var(--text-tertiary)]">
+              You cannot accept new bookings or go online while your account is {status}.
+            </div>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -16,7 +75,7 @@ export default function TechnicianDashboard() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/3" />
           <div className="z-10">
             <h1 className="text-3xl font-bold">Dashboard Overview</h1>
-            <p className="text-primary-100 mt-1">Here is what's happening today.</p>
+            <p className="text-primary-100 mt-1">Welcome back! Here is what's happening today.</p>
           </div>
           <div className="z-10 flex items-center gap-3 bg-black/20 p-2 rounded-xl backdrop-blur-sm">
             <span className="text-sm font-medium">Status:</span>
@@ -38,7 +97,7 @@ export default function TechnicianDashboard() {
             </div>
             <div>
               <p className="text-sm text-[var(--text-secondary)]">Today's Earnings</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)]">₹1,450</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">₹0</p>
             </div>
           </Card>
           
@@ -48,7 +107,7 @@ export default function TechnicianDashboard() {
             </div>
             <div>
               <p className="text-sm text-[var(--text-secondary)]">Jobs Completed</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)]">3</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{profile?.reviewCount || 0}</p>
             </div>
           </Card>
           
@@ -58,7 +117,7 @@ export default function TechnicianDashboard() {
             </div>
             <div>
               <p className="text-sm text-[var(--text-secondary)]">Average Rating</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)] flex items-baseline gap-1">4.8 <span className="text-sm font-normal text-[var(--text-tertiary)]">/ 5</span></p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] flex items-baseline gap-1">{profile?.rating || '0.0'} <span className="text-sm font-normal text-[var(--text-tertiary)]">/ 5</span></p>
             </div>
           </Card>
           
@@ -68,7 +127,7 @@ export default function TechnicianDashboard() {
             </div>
             <div>
               <p className="text-sm text-[var(--text-secondary)]">Weekly Trend</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)]">+12%</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">+0%</p>
             </div>
           </Card>
         </div>
@@ -78,61 +137,20 @@ export default function TechnicianDashboard() {
           <Card className="p-6">
             <div className="flex justify-between items-center mb-6 border-b border-[var(--border-primary)] pb-4">
               <h2 className="text-xl font-bold text-[var(--text-primary)]">New Requests</h2>
-              <Badge variant="error" className="animate-pulse">1 New</Badge>
+              <span className="text-xs text-[var(--text-tertiary)]">No new requests</span>
             </div>
-            
-            <div className="bg-[var(--color-primary-50)] dark:bg-[var(--color-primary-900)]/20 p-5 rounded-xl border border-[var(--color-primary-200)] dark:border-[var(--color-primary-800)]">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="font-bold text-[var(--text-primary)] text-lg">AC Installation</h3>
-                  <p className="text-sm text-[var(--text-secondary)] flex items-center gap-1 mt-1">
-                    <Clock size={14} /> Today, 4:00 PM
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-xl text-[var(--color-primary-600)]">₹899</p>
-                  <p className="text-xs text-[var(--text-tertiary)]">Est. 2 hours</p>
-                </div>
-              </div>
-              <p className="text-sm text-[var(--text-secondary)] mb-6 bg-[var(--bg-primary)] p-3 rounded-lg border border-[var(--border-primary)]">
-                "Need installation for a split AC. Wiring is already done."
-              </p>
-              <div className="flex gap-3">
-                <Button className="flex-1" onClick={() => showToast.success('Job accepted!')}>Accept Job</Button>
-                <Button variant="outline" className="flex-1" onClick={() => showToast.error('Job declined!')}>Decline</Button>
-              </div>
+            <div className="text-center py-10">
+              <Clock className="mx-auto text-[var(--text-tertiary)] mb-4 opacity-50" size={40} />
+              <p className="text-[var(--text-secondary)]">You're all caught up!</p>
             </div>
           </Card>
 
           {/* Today's Schedule */}
           <Card className="p-6">
             <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6 border-b border-[var(--border-primary)] pb-4">Today's Schedule</h2>
-            <div className="relative pl-6 space-y-8 before:absolute before:inset-0 before:ml-8 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[var(--border-primary)] before:to-transparent">
-              
-              {/* Timeline Item 1 */}
-              <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className="flex items-center justify-center w-6 h-6 rounded-full border-4 border-[var(--bg-primary)] bg-[var(--color-success)] text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10"></div>
-                <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] bg-[var(--bg-secondary)] p-4 rounded-xl border border-[var(--border-primary)]">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="font-bold text-[var(--text-primary)]">Deep Cleaning</div>
-                    <div className="text-xs text-[var(--text-tertiary)]">10:00 AM</div>
-                  </div>
-                  <Badge variant="success" className="text-[10px] px-2 py-0">Completed</Badge>
-                </div>
-              </div>
-
-              {/* Timeline Item 2 */}
-              <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className="flex items-center justify-center w-6 h-6 rounded-full border-4 border-[var(--bg-primary)] bg-[var(--color-primary-500)] text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10"></div>
-                <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] bg-[var(--bg-primary)] p-4 rounded-xl border-2 border-[var(--color-primary-500)] shadow-md">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="font-bold text-[var(--text-primary)]">Pipe Leakage</div>
-                    <div className="text-xs text-[var(--text-tertiary)]">2:30 PM</div>
-                  </div>
-                  <Badge variant="primary" className="text-[10px] px-2 py-0">In Progress</Badge>
-                </div>
-              </div>
-
+            <div className="text-center py-10">
+              <CheckCircle className="mx-auto text-[var(--text-tertiary)] mb-4 opacity-50" size={40} />
+              <p className="text-[var(--text-secondary)]">No active jobs scheduled.</p>
             </div>
           </Card>
         </div>
