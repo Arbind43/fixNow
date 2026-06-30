@@ -17,7 +17,7 @@ export default function TechnicianDashboard() {
 
   const fetchProfile = async (silent = false) => {
     try {
-      const res = await axios.get('/api/technician/profile');
+      const res = await axios.get('/api/technician/me/profile');
       setProfile(res.data.data);
     } catch {
       if (!silent) showToast.error('Failed to load profile');
