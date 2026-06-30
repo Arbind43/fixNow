@@ -10,6 +10,10 @@ export default function TechnicianDashboard() {
   const [isOnline, setIsOnline] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showReapply, setShowReapply]     = useState(false);
+  const [reapplyNote, setReapplyNote]     = useState('');
+  const [reapplyFiles, setReapplyFiles]   = useState<Record<string, File | null>>({});
+  const [submitting, setSubmitting]       = useState(false);
 
   const fetchProfile = async (silent = false) => {
     try {
@@ -40,11 +44,7 @@ export default function TechnicianDashboard() {
   }
 
   // ── Full-page block for unverified accounts ──────────────────────────────────
-  // ── State for re-apply form ──────────────────────────────────────────────────
-  const [showReapply, setShowReapply]     = useState(false);
-  const [reapplyNote, setReapplyNote]     = useState('');
-  const [reapplyFiles, setReapplyFiles]   = useState<Record<string, File | null>>({});
-  const [submitting, setSubmitting]       = useState(false);
+
 
   const handleReapplyFile = (field: string, file: File | null) => {
     setReapplyFiles(prev => ({ ...prev, [field]: file }));
