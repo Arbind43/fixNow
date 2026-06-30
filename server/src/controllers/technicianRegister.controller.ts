@@ -135,7 +135,7 @@ export const registerTechnician = async (req: Request, res: Response, next: Next
         emergencyCharge:  Number(emergencyCharge)  || 0,
       },
 
-      verificationStatus: 'verified',
+      verificationStatus: 'pending',
     });
 
     // 3. Return token so they're logged in right away
@@ -143,7 +143,7 @@ export const registerTechnician = async (req: Request, res: Response, next: Next
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful! You are now verified and can receive service assignments.',
+      message: 'Registration successful! Your profile is pending verification by an admin.',
       data: {
         token,
         user: {

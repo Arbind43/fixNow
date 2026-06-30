@@ -375,6 +375,15 @@ export const updateTechnicianVerification = async (req: Request, res: Response, 
       details:    reason || notes,
     });
 
+    // If approving, also mark the underlying User as verified
+    if (action === 'approve' && tech.user) {
+      await User.findByIdAndUpdate(tech.user, { isVerified: true });
+    } else if (action === 'suspend' || action === 'reject') {
+      await User.findByIdAndUpdate(tech.user, { isVerified: false });
+    } else if (action === 'reactivate') {
+      await User.findByIdAndUpdate(tech.user, { isVerified: true });
+    }
+
     res.status(200).json({ success: true, message: `Technician ${action} successful`, data: tech });
   } catch (error) {
     next(error);
