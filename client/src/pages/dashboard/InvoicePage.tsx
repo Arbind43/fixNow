@@ -27,10 +27,22 @@ export default function InvoicePage() {
     if (bookingId) generateAndFetchInvoice();
   }, [bookingId]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!invoice?._id) return;
-    // Open the PDF stream endpoint in a new tab to trigger browser download
-    window.open(`/api/invoices/${invoice._id}/pdf`, '_blank');
+    try {
+      const res = await axios.get(`/api/invoices/${invoice._id}/pdf`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Invoice-${invoice.invoiceNumber || invoice._id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      showToast.error('Failed to download invoice');
+    }
   };
 
   if (isLoading) {
