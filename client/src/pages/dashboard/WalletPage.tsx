@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Wallet as WalletIcon, ArrowUpRight, ArrowDownRight, Plus, Download,
   Building2, CreditCard, CheckCircle2, AlertCircle, Pencil, X, ChevronRight,
@@ -342,7 +342,7 @@ export default function WalletPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           >
             <motion.div
               initial={{ scale: 0.92, y: 30 }}
@@ -460,7 +460,7 @@ export default function WalletPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           >
             <motion.div
               initial={{ scale: 0.92, y: 30 }}
