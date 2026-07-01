@@ -960,6 +960,19 @@ export const updateWithdrawalStatus = async (req: Request, res: Response, next: 
       }
     }
 
+    // Send notification to the user
+    if (tx.wallet && (tx.wallet as any).user) {
+      await Notification.create({
+        user: (tx.wallet as any).user._id || (tx.wallet as any).user,
+        title: status === 'completed' ? 'Withdrawal Processed' : 'Withdrawal Failed',
+        message: status === 'completed' 
+          ? `Your withdrawal of ₹${tx.amount} has been successfully processed to your bank account.` 
+          : `Your withdrawal of ₹${tx.amount} could not be processed. The amount has been refunded to your wallet.`,
+        type: 'wallet',
+        link: '/dashboard/wallet'
+      });
+    }
+
     await createAuditLog(req, 'UPDATE_WITHDRAWAL', {
       targetId: tx._id.toString(),
       targetType: 'Transaction',
