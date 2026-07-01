@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight, CreditCard, TrendingUp, Check, X, RefreshCw } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -63,11 +63,11 @@ export default function PaymentManagement() {
   useEffect(() => { setPage(1); }, [statusFilter]);
 
   const handlePayoutAction = async (id: string, status: 'completed' | 'failed') => {
-    if (!window.confirm(Are you sure you want to mark this payout as \\\?)) return;
+    if (!window.confirm(`Are you sure you want to mark this payout as ${status}?`)) return;
     setProcessingId(id);
     try {
-      await axios.patch(/api/admin/withdrawals/\\\/action, { status });
-      toast.success(\Payout marked as \\);
+      await axios.patch(`/api/admin/withdrawals/${id}/action`, { status });
+      toast.success(`Payout marked as ${status}`);
       fetchWithdrawals();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Action failed');
@@ -87,13 +87,13 @@ export default function PaymentManagement() {
           <div className="flex bg-[var(--bg-secondary)] p-1 rounded-lg border border-[var(--border-primary)] w-max">
             <button
               onClick={() => setActiveTab('payments')}
-              className={\px-4 py-2 text-sm font-semibold rounded-md transition-all \\}
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${activeTab === 'payments' ? 'bg-indigo-500 text-white shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
             >
               Payments Received
             </button>
             <button
               onClick={() => setActiveTab('payouts')}
-              className={\px-4 py-2 text-sm font-semibold rounded-md transition-all \\}
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${activeTab === 'payouts' ? 'bg-indigo-500 text-white shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
             >
               Pending Payouts
             </button>
