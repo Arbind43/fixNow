@@ -25,6 +25,8 @@ import {
   adminCreateCategory,
   adminUpdateCategory,
   adminDeleteCategory,
+  getAllWithdrawals,
+  updateWithdrawalStatus,
 } from '../controllers/admin.controller';
 
 const router = express.Router();
@@ -70,6 +72,10 @@ router.patch('/reviews/:id/action', updateReview);
 
 // ── Payments ──────────────────────────────────────────────────────────────────
 router.get('/payments', getAllPayments);
+
+// ── Payouts / Withdrawals ─────────────────────────────────────────────────────
+router.get('/withdrawals', getAllWithdrawals);
+router.patch('/withdrawals/:id/action', updateWithdrawalStatus);
 
 // ── Platform Settings ─────────────────────────────────────────────────────────
 router.get('/settings', getSettings);

@@ -1,3 +1,6 @@
+import { Transaction } from '../models/Transaction';
+import { Wallet } from '../models/Wallet';
+import { AppError } from '../utils/AppError';
 import { Request, Response, NextFunction } from 'express';
 import { Booking } from '../models/Booking';
 import { User } from '../models/User';
@@ -11,7 +14,7 @@ import { AuditLog } from '../models/AuditLog';
 import { PlatformSettings } from '../models/PlatformSettings';
 import { Notification } from '../models/Notification';
 
-// ─── Helper: create audit log ────────────────────────────────────────────────
+// â”€â”€â”€ Helper: create audit log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function createAuditLog(req: Request, action: any, opts?: {
   targetId?: string;
   targetType?: string;
@@ -35,9 +38,9 @@ async function createAuditLog(req: Request, action: any, opts?: {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 1. DASHBOARD METRICS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getDashboardMetrics = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const now = new Date();
@@ -93,7 +96,7 @@ export const getDashboardMetrics = async (req: Request, res: Response, next: Nex
       { name: 'Cancelled',   value: cancelledBookings },
     ];
 
-    // Revenue trend – last 30 days
+    // Revenue trend â€“ last 30 days
     const revenueData = [];
     for (let i = 29; i >= 0; i--) {
       const date = new Date();
@@ -109,7 +112,7 @@ export const getDashboardMetrics = async (req: Request, res: Response, next: Nex
       });
     }
 
-    // User growth – last 30 days
+    // User growth â€“ last 30 days
     const userGrowthData = [];
     for (let i = 29; i >= 0; i--) {
       const date = new Date();
@@ -144,9 +147,9 @@ export const getDashboardMetrics = async (req: Request, res: Response, next: Nex
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 2. USER MANAGEMENT
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page  = parseInt(req.query.page as string)  || 1;
@@ -251,9 +254,9 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 3. PROFESSIONAL VERIFICATION & MANAGEMENT
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getAllTechnicians = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page   = parseInt(req.query.page as string)  || 1;
@@ -346,7 +349,7 @@ export const updateTechnicianVerification = async (req: Request, res: Response, 
         tech.verificationStatus = 'verified';
         tech.docsRequested      = '';   // clear any pending doc request
         auditAction  = 'APPROVE_TECHNICIAN';
-        notifTitle   = '🎉 Verification Approved!';
+        notifTitle   = 'ðŸŽ‰ Verification Approved!';
         notifMsg     = 'Congratulations! Your professional account has been verified. You can now go online and start accepting jobs.';
         break;
 
@@ -354,7 +357,7 @@ export const updateTechnicianVerification = async (req: Request, res: Response, 
         tech.verificationStatus = 'rejected';
         tech.rejectionReason    = reason || '';
         auditAction  = 'REJECT_TECHNICIAN';
-        notifTitle   = '❌ Verification Rejected';
+        notifTitle   = 'âŒ Verification Rejected';
         notifMsg     = reason
           ? `Your verification was rejected. Reason: ${reason}. Please contact support for more information.`
           : 'Your verification was rejected. Please contact support for more information.';
@@ -364,7 +367,7 @@ export const updateTechnicianVerification = async (req: Request, res: Response, 
         tech.verificationStatus          = 'suspended';
         (tech as any).suspendedReason    = reason || '';
         auditAction  = 'SUSPEND_TECHNICIAN';
-        notifTitle   = '⚠️ Account Suspended';
+        notifTitle   = 'âš ï¸ Account Suspended';
         notifMsg     = reason
           ? `Your account has been suspended. Reason: ${reason}. Please contact support.`
           : 'Your account has been suspended. Please contact support for more information.';
@@ -374,14 +377,14 @@ export const updateTechnicianVerification = async (req: Request, res: Response, 
         tech.verificationStatus = 'verified';
         (tech as any).suspendedReason = '';
         auditAction  = 'ACTIVATE_TECHNICIAN';
-        notifTitle   = '✅ Account Reactivated';
+        notifTitle   = 'âœ… Account Reactivated';
         notifMsg     = 'Your account has been reactivated. You can now go online and accept new jobs.';
         break;
 
       case 'request_docs':
         tech.docsRequested = notes || reason || 'The admin has requested additional documents for verification.';
         auditAction  = 'REQUEST_ADDITIONAL_DOCS';
-        notifTitle   = '📄 Additional Documents Required';
+        notifTitle   = 'ðŸ“„ Additional Documents Required';
         notifMsg     = notes || reason
           ? `Admin message: ${notes || reason}`
           : 'Please upload additional documents to complete your verification. Log in to your dashboard for details.';
@@ -391,7 +394,7 @@ export const updateTechnicianVerification = async (req: Request, res: Response, 
       case 'add_note':
         (tech as any).verificationNotes = notes || '';
         auditAction  = 'ADD_VERIFICATION_NOTE';
-        notifTitle   = '📝 Verification Note Added';
+        notifTitle   = 'ðŸ“ Verification Note Added';
         notifMsg     = notes
           ? `Admin note: ${notes}`
           : 'The admin has added a note to your verification.';
@@ -445,9 +448,9 @@ export const deleteTechnician = async (req: Request, res: Response, next: NextFu
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 4. BOOKING MANAGEMENT
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getAllBookings = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page   = parseInt(req.query.page as string)  || 1;
@@ -514,9 +517,9 @@ export const updateBooking = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 5. COMPLAINT MANAGEMENT
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getAllComplaints = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page   = parseInt(req.query.page as string)  || 1;
@@ -585,9 +588,9 @@ export const updateComplaint = async (req: Request, res: Response, next: NextFun
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 6. REVIEWS MANAGEMENT
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getAllReviews = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page   = parseInt(req.query.page as string)  || 1;
@@ -653,9 +656,9 @@ export const updateReview = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 7. PAYMENTS MANAGEMENT
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getAllPayments = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page  = parseInt(req.query.page as string)  || 1;
@@ -692,9 +695,9 @@ export const getAllPayments = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 8. PLATFORM SETTINGS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getSettings = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let settings = await PlatformSettings.findOne();
@@ -721,9 +724,9 @@ export const updateSettings = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 9. AUDIT LOGS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getAuditLogs = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page  = parseInt(req.query.page as string)  || 1;
@@ -749,9 +752,9 @@ export const getAuditLogs = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 10. NOTIFICATIONS CENTER
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const sendAdminNotification = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { title, body, type, targetType, targetUserId } = req.body;
@@ -796,9 +799,9 @@ export const sendAdminNotification = async (req: Request, res: Response, next: N
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 11. REPORTS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const generateReport = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { type, startDate, endDate } = req.query;
@@ -856,9 +859,9 @@ export const generateReport = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 12. SERVICES & CATEGORIES  (admin CRUD wrappers for audit logging)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const adminCreateCategory = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const category = await ServiceCategory.create(req.body);
@@ -889,3 +892,84 @@ export const adminDeleteCategory = async (req: Request, res: Response, next: Nex
     next(error);
   }
 };
+
+// â”€â”€â”€ Withdrawals (Manual Payouts) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export const getAllWithdrawals = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = {
+      type: 'debit' as const,
+      description: { $regex: 'Withdrawal to bank', $options: 'i' }
+    };
+
+    const transactions = await Transaction.find(query)
+      .populate({ path: 'wallet', populate: { path: 'user', select: 'name email role' } })
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Transaction.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      count: transactions.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: transactions,
+    });
+  } catch (error) { next(error); }
+};
+
+export const updateWithdrawalStatus = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { status } = req.body;
+    if (!['completed', 'failed'].includes(status)) {
+      return next(new AppError('Status must be completed or failed', 400));
+    }
+
+    const tx = await Transaction.findById(req.params.id).populate('wallet');
+    if (!tx) return next(new AppError('Withdrawal transaction not found', 404));
+
+    if (tx.status !== 'pending') {
+      return next(new AppError('Transaction is already processed', 400));
+    }
+
+    tx.status = status;
+    await tx.save();
+
+    // If failed, refund the wallet
+    if (status === 'failed' && tx.wallet) {
+      const wallet = await Wallet.findById((tx.wallet as any)._id);
+      if (wallet) {
+        wallet.balance += tx.amount;
+        await wallet.save();
+        
+        await Transaction.create({
+          wallet: wallet._id,
+          type: 'credit',
+          amount: tx.amount,
+          description: 'Refund for failed withdrawal',
+          reference: tx.reference,
+          status: 'completed',
+        });
+      }
+    }
+
+    await createAuditLog(req, 'UPDATE_WITHDRAWAL', {
+      targetId: tx._id.toString(),
+      targetType: 'Transaction',
+      details: `Withdrawal marked as ${status}`,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: tx,
+    });
+  } catch (error) { next(error); }
+};
+
