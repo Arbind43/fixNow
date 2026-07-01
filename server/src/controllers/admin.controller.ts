@@ -968,7 +968,7 @@ export const updateWithdrawalStatus = async (req: Request, res: Response, next: 
         message: status === 'completed' 
           ? `Your withdrawal of ₹${tx.amount} has been successfully processed to your bank account.` 
           : `Your withdrawal of ₹${tx.amount} could not be processed. The amount has been refunded to your wallet.`,
-        type: 'wallet',
+        type: 'payment',
         link: '/dashboard/wallet'
       });
     }
