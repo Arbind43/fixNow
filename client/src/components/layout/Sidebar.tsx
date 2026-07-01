@@ -41,7 +41,7 @@ const menuItems = {
     { name: 'All Bookings',       path: '/admin/bookings',       icon: Calendar },
     { name: 'Complaints',         path: '/admin/complaints',     icon: AlertTriangle },
     { name: 'Reviews',            path: '/admin/reviews',        icon: FileText },
-    { name: 'Payments',           path: '/admin/payments',       icon: Briefcase },
+    { name: 'Finance',            path: '/admin/payments',       icon: Briefcase },
     { name: 'Services',           path: '/admin/services',       icon: ShieldCheck },
     { name: 'Reports',            path: '/admin/reports',        icon: FileText },
     { name: 'Notifications',      path: '/admin/notifications',  icon: Bell },
