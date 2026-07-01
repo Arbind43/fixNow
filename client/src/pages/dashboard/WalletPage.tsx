@@ -311,7 +311,7 @@ export default function WalletPage() {
                     <div>
                       <p className="text-sm font-semibold text-[var(--text-primary)]">{tx.description}</p>
                       <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                        {tx.createdAt ? format(new Date(tx.createdAt), 'MMM d, yyyy Â· h:mm a') : 'â€”'}
+                        {tx.createdAt ? format(new Date(tx.createdAt), 'MMM d, yyyy Â� h:mm a') : 'â€”'}
                         {tx.reference && <span className="ml-2 font-mono text-[10px]">{tx.reference.toString().slice(-10).toUpperCase()}</span>}
                       </p>
                     </div>
@@ -325,7 +325,7 @@ export default function WalletPage() {
                       : tx.status === 'pending'  ? 'bg-amber-500/15 text-amber-400'
                       : 'bg-red-500/15 text-red-400'
                     }`}>
-                      {tx.status === 'pending' ? 'â³ Processing' : tx.status === 'completed' ? 'âœ“ Done' : 'âœ— Failed'}
+                      {tx.status === 'pending' ? 'â³ Processing' : tx.status === 'completed' ? 'âœ“ Done' : 'âœ� Failed'}
                     </span>
                   </div>
                 </div>
@@ -541,7 +541,7 @@ export default function WalletPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{bankAccount?.accountHolderName}</p>
                           <p className="text-xs text-[var(--text-tertiary)]">
-                            {bankAccount?.bankName || 'Bank'} â€¢â€¢â€¢â€¢{bankAccount?.accountNumber?.slice(-4)} Â· {bankAccount?.ifscCode}
+                            {bankAccount?.bankName || 'Bank'} â€¢â€¢â€¢â€¢{bankAccount?.accountNumber?.slice(-4)} Â� {bankAccount?.ifscCode}
                           </p>
                         </div>
                         <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
