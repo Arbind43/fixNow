@@ -28,6 +28,8 @@ export default function CustomerBookingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelModal, setCancelModal] = useState<{ booking: any; refundPct: number } | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [reviewBooking, setReviewBooking] = useState<any | null>(null);
   const [reviewedIds, setReviewedIds]     = useState<Set<string>>(new Set());
 
@@ -45,13 +47,32 @@ export default function CustomerBookingsPage() {
 
   useEffect(() => { fetchBookings(); }, []);
 
-  const handleCancel = async (bookingId: string) => {
-    if (!confirm('Are you sure you want to cancel this booking?')) return;
+  // Compute refund percentage for the cancellation modal
+  const computeRefundPct = (scheduledDate: string): number => {
+    const hoursUntil = (new Date(scheduledDate).getTime() - Date.now()) / (1000 * 60 * 60);
+    if (hoursUntil > 24) return 100;
+    if (hoursUntil >= 2) return 50;
+    return 0;
+  };
+
+  const openCancelModal = (booking: any) => {
+    const pct = computeRefundPct(booking.scheduledDate);
+    setCancelModal({ booking, refundPct: pct });
+    setCancelReason('');
+  };
+
+  const handleCancel = async () => {
+    if (!cancelModal) return;
+    const bookingId = cancelModal.booking._id;
     setCancellingId(bookingId);
     try {
-      await axios.put(`/api/bookings/${bookingId}/status`, { status: 'cancelled' });
-      showToast.success('Booking cancelled successfully.');
-      setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: 'cancelled' } : b));
+      await axios.put(`/api/bookings/${bookingId}/status`, { status: 'cancelled', reason: cancelReason || 'Customer cancelled' });
+      const refundMsg = cancelModal.booking.paymentStatus === 'completed'
+        ? (cancelModal.refundPct === 100 ? ' Full refund will be processed.' : cancelModal.refundPct === 50 ? ` 50% refund (₹${Math.round(cancelModal.booking.totalAmount * 0.5)}) will be processed.` : ' No refund applicable.')
+        : '';
+      showToast.success(`Booking cancelled.${refundMsg}`);
+      setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: 'cancelled', refundAmount: Math.round(cancelModal.booking.totalAmount * cancelModal.refundPct / 100) } : b));
+      setCancelModal(null);
     } catch (err: any) {
       showToast.error(err.response?.data?.message || 'Failed to cancel booking.');
     } finally {
@@ -178,10 +199,17 @@ export default function CustomerBookingsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right hidden sm:block">
+                        <div className="text-right">
                           <p className="text-xl font-extrabold text-[var(--text-primary)]">₹{(booking.totalAmount || 0).toLocaleString()}</p>
-                          <p className={`text-xs capitalize font-medium ${booking.paymentStatus === 'completed' ? 'text-emerald-500' : 'text-zinc-400'}`}>
-                            {booking.paymentStatus === 'completed' ? '✓ Paid' : 'Payment Pending'}
+                          <p className={`text-xs capitalize font-medium ${
+                            booking.paymentStatus === 'refunded' ? 'text-blue-400'
+                            : booking.paymentStatus === 'completed' ? 'text-emerald-500'
+                            : 'text-zinc-400'
+                          }`}>
+                            {booking.paymentStatus === 'refunded'
+                              ? `↩ Refund: ₹${(booking.refundAmount || 0).toLocaleString()}`
+                              : booking.paymentStatus === 'completed' ? '✓ Paid'
+                              : 'Payment Pending'}
                           </p>
                         </div>
                         <StatusPill status={booking.status} />
@@ -262,7 +290,7 @@ export default function CustomerBookingsPage() {
                         {(booking.status === 'pending' || booking.status === 'accepted') && (
                           <button
                             disabled={cancellingId === booking._id}
-                            onClick={() => handleCancel(booking._id)}
+                            onClick={() => openCancelModal(booking)}
                             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-xl text-sm font-semibold transition-all"
                           >
                             {cancellingId === booking._id ? (
@@ -315,6 +343,61 @@ export default function CustomerBookingsPage() {
           setReviewBooking(null);
         }}
       />
+    )}
+
+    {/* Cancellation Policy Modal */}
+    {cancelModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+          <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">Cancel Booking?</h2>
+          <p className="text-sm text-[var(--text-secondary)] mb-4">
+            Service: <strong>{cancelModal.booking.service?.name}</strong>
+          </p>
+
+          {cancelModal.booking.paymentStatus === 'completed' && (
+            <div className={`p-3 rounded-xl mb-4 text-sm font-semibold ${
+              cancelModal.refundPct === 100 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              : cancelModal.refundPct === 50 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              : 'bg-red-500/10 text-red-400 border border-red-500/20'
+            }`}>
+              {cancelModal.refundPct === 100 && `✅ You'll get a full refund of ₹${cancelModal.booking.totalAmount}`}
+              {cancelModal.refundPct === 50  && `⚠️ You'll get a 50% refund of ₹${Math.round(cancelModal.booking.totalAmount * 0.5)}`}
+              {cancelModal.refundPct === 0   && '❌ No refund (cancellation < 2 hours before job)'}
+            </div>
+          )}
+
+          <div className="mb-5 p-3 text-xs bg-[var(--bg-secondary)] rounded-xl space-y-1 text-[var(--text-tertiary)]">
+            <p className="font-semibold text-[var(--text-secondary)] mb-1">📋 Refund Policy</p>
+            <p>• Cancel &gt;24 hrs → <span className="text-emerald-400 font-medium">100% refund</span></p>
+            <p>• Cancel 2–24 hrs → <span className="text-amber-400 font-medium">50% refund</span></p>
+            <p>• Cancel &lt;2 hrs → <span className="text-red-400 font-medium">No refund</span></p>
+          </div>
+
+          <textarea
+            placeholder="Reason for cancellation (optional)"
+            value={cancelReason}
+            onChange={e => setCancelReason(e.target.value)}
+            className="w-full mb-4 p-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] resize-none focus:outline-none focus:border-amber-500/50"
+            rows={2}
+          />
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setCancelModal(null)}
+              className="flex-1 py-2.5 rounded-xl border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm font-semibold transition-colors"
+            >
+              Keep Booking
+            </button>
+            <button
+              onClick={handleCancel}
+              disabled={!!cancellingId}
+              className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+            >
+              {cancellingId ? 'Cancelling...' : 'Yes, Cancel'}
+            </button>
+          </div>
+        </div>
+      </div>
     )}
   </>
   );

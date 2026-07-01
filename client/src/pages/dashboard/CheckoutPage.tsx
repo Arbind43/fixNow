@@ -64,6 +64,8 @@ export default function CheckoutPage() {
     setCouponCode('');
   };
 
+  const [platformFee, setPlatformFee] = useState(0);
+
   const handlePayment = async () => {
     if (!bookingId) return;
     setIsProcessing(true);
@@ -73,9 +75,8 @@ export default function CheckoutPage() {
         bookingId,
         amount: finalTotal,
       });
-      const { orderId, amount, currency, keyId, isMock } = orderRes.data.data;
-
-      // We no longer bypass the UI in mock mode. The Razorpay modal will open.
+      const { orderId, amount, currency, keyId, platformFee: pFee } = orderRes.data.data;
+      if (pFee) setPlatformFee(pFee);
 
       const options = {
         key: keyId, amount, currency,
@@ -173,9 +174,25 @@ export default function CheckoutPage() {
                   <span className="text-[var(--text-secondary)]">Technician</span>
                   <span className="font-semibold text-amber-500">{techName}</span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[var(--border-primary)]">
-                  <span className="text-[var(--text-secondary)]">Total Charge</span>
-                  <span className="font-semibold text-[var(--text-primary)]">₹{basePrice}</span>
+                <div className="border-t border-[var(--border-primary)] pt-3 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-secondary)]">Service charge</span>
+                    <span className="text-[var(--text-primary)]">₹{basePrice}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-secondary)]">Platform fee (15%)</span>
+                    <span className="text-[var(--text-primary)]">₹{Math.round(basePrice * 0.15)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-secondary)]">GST (18%)</span>
+                    <span className="text-[var(--text-primary)]">₹{Math.round(basePrice * 0.18)}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-emerald-500">
+                      <span>Coupon discount</span>
+                      <span>-₹{discount}</span>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Coupon Application */}
@@ -212,11 +229,20 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="border-t border-[var(--border-primary)] pt-4 mb-6">
+              <div className="border-t border-[var(--border-primary)] pt-4 mb-4">
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-[var(--text-primary)]">Total</span>
                   <span className="text-2xl font-bold text-amber-500">₹{finalTotal.toLocaleString()}</span>
                 </div>
+              </div>
+
+              {/* Cancellation Policy */}
+              <div className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                <p className="font-semibold text-sm">📋 Cancellation Policy</p>
+                <p>✅ Cancel &gt;24 hrs before → <strong>100% refund</strong></p>
+                <p>⚠️ Cancel 2–24 hrs before → <strong>50% refund</strong></p>
+                <p>❌ Cancel &lt;2 hrs before → <strong>No refund</strong></p>
+                <p>🔧 Professional cancels → <strong>100% refund</strong></p>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-emerald-500 bg-emerald-500/10 p-3 rounded-lg mb-6">

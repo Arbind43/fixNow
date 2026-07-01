@@ -5,6 +5,7 @@ import { Service } from '../models/Service';
 import { AppError } from '../utils/AppError';
 import { TechnicianProfile } from '../models/TechnicianProfile';
 import { Notification } from '../models/Notification';
+import { processRefund, releaseEscrowToTechnician, getRefundPercentage } from './payment.controller';
 
 export const createBooking = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -288,82 +289,69 @@ export const updateBookingStatus = async (req: Request, res: Response, next: Nex
     booking.status = status;
     await booking.save();
 
-    // If job is completed, credit the technician's wallet
+    // If job is completed, release escrow → credit technician wallet
     if (status === 'completed' && booking.paymentStatus === 'completed') {
       try {
-        const Wallet = require('../models/Wallet').Wallet;
-        const Transaction = require('../models/Transaction').Transaction;
-        const techProfile = await require('../models/TechnicianProfile').TechnicianProfile.findById(booking.technician);
-        
-        if (techProfile) {
-          const techUserId = techProfile.user;
-          let wallet = await Wallet.findOne({ user: techUserId });
-          if (!wallet) {
-            wallet = await Wallet.create({ user: techUserId, balance: 0 });
-          }
-          
-          // Earnings = totalAmount - platformFee (approx) or just totalAmount for now if basePrice
-          // Let's say platform fee is 49.
-          const earnings = (booking.totalAmount || 500) - 49;
-          
-          // Only credit if it hasn't been credited yet to avoid double counting
-          const existingTx = await Transaction.findOne({ reference: booking._id.toString() });
-          
-          if (!existingTx && earnings > 0) {
-            wallet.balance += earnings;
-            await wallet.save();
-            
-            await Transaction.create({
-              wallet: wallet._id,
-              type: 'credit',
-              amount: earnings,
-              description: `Earnings for booking ${booking._id.toString().slice(-6).toUpperCase()}`,
-              reference: booking._id.toString(),
-              status: 'completed'
-            });
-            console.log(`[Wallet] Credited Rs. ${earnings} to technician ${techUserId}`);
-          }
-        }
+        await releaseEscrowToTechnician(booking._id.toString());
       } catch (err) {
-        console.error('[Wallet] Error crediting technician:', err);
+        console.error('[Escrow] Error releasing to technician:', err);
       }
     }
 
-    // Notify the other party
-    try {
-      const populatedBooking = await Booking.findById(booking._id)
-        .populate('customer', 'name')
-        .populate({ path: 'technician', populate: { path: 'user', select: 'name' } });
+    // If cancelled, process refund based on time policy
+    if (status === 'cancelled') {
+      const cancellerRole = (userRole === 'technician' ? 'technician' : userRole === 'admin' ? 'admin' : 'customer') as 'customer' | 'technician' | 'admin';
+      const cancellationReason = req.body.reason || 'No reason provided';
 
-      const notifyUserId = userRole === 'technician'
-        ? (populatedBooking?.customer as any)?._id
-        : (populatedBooking?.technician as any)?.user?._id;
+      // Update booking with cancellation details
+      booking.cancellationReason = cancellationReason;
+      booking.cancelledBy        = cancellerRole;
+      await booking.save();
 
-      if (notifyUserId) {
-        const statusMsg: Record<string, string> = {
-          accepted:    'Your booking has been accepted by the technician!',
-          in_progress: 'Your service is now in progress.',
-          completed:   'Your service has been completed. Please leave a review!',
-          cancelled:   userRole === 'technician' 
-                        ? 'The technician was unable to accept your booking. Please try booking again.' 
-                        : 'The customer has cancelled the booking.',
-        };
-        const notif = await Notification.create({
-          user: notifyUserId,
-          title: `Booking ${status.replace('_', ' ').replace(/^\w/, (c: string) => c.toUpperCase())}`,
-          message: statusMsg[status] || `Booking status updated to ${status}.`,
-          type: 'booking',
-          link: userRole === 'technician' ? '/dashboard/bookings' : '/dashboard/job-requests',
-        });
-        
-        // Emit via Socket.io
-        const io = req.app.get('io');
-        if (io) {
-          io.to(`user_${notifyUserId}`).emit('new_notification', notif);
+      // Calculate refund entitlement (show to user even before processing)
+      const refundPct = getRefundPercentage(cancellerRole, booking.scheduledDate, currentStatus);
+
+      // Process actual refund (async, non-blocking)
+      processRefund(booking._id.toString(), cancellerRole, cancellationReason).then(({ refundAmount }) => {
+        console.log(`[Cancellation] Refund of ₹${refundAmount} processed for booking ${booking._id}`);
+      }).catch(err => console.error('[Cancellation] Refund failed:', err));
+
+      // Notify both parties about cancellation + refund
+      try {
+        const populatedBooking = await Booking.findById(booking._id)
+          .populate('customer', 'name')
+          .populate({ path: 'technician', populate: { path: 'user', select: 'name' } });
+
+        const refundMsg = booking.paymentStatus === 'completed'
+          ? (refundPct === 100 ? '💸 You will receive a full refund.' : refundPct === 50 ? `💸 You will receive a 50% refund (₹${Math.round(booking.totalAmount * 0.5)}).` : '⚠️ No refund applicable as cancellation was too close to the job time.')
+          : '';
+
+        const customerMsg = cancellerRole === 'technician'
+          ? `The technician cancelled your booking. ${refundMsg}`
+          : `Your booking has been cancelled. ${refundMsg}`;
+
+        const techMsg = cancellerRole === 'customer'
+          ? 'The customer has cancelled the booking.'
+          : 'You have cancelled the booking.';
+
+        const customerId = (populatedBooking?.customer as any)?._id;
+        const techUserId = (populatedBooking?.technician as any)?.user?._id;
+
+        if (customerId) {
+          const notif = await Notification.create({ user: customerId, title: 'Booking Cancelled', message: customerMsg, type: 'booking', link: '/dashboard/bookings' });
+          const io = req.app.get('io');
+          if (io) io.to(`user_${customerId}`).emit('new_notification', notif);
         }
+        if (techUserId && cancellerRole !== 'technician') {
+          const notif = await Notification.create({ user: techUserId, title: 'Booking Cancelled', message: techMsg, type: 'booking', link: '/dashboard/job-requests' });
+          const io = req.app.get('io');
+          if (io) io.to(`user_${techUserId}`).emit('new_notification', notif);
+        }
+      } catch (notifyErr) {
+        console.warn('[Booking] Cancellation notification failed:', notifyErr);
       }
-    } catch (notifyErr) {
-      console.warn('[Booking] Notification failed:', notifyErr);
+
+      return res.status(200).json({ success: true, data: booking, refundPercent: refundPct });
     }
 
     res.status(200).json({ success: true, data: booking });

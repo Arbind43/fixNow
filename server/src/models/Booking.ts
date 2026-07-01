@@ -15,10 +15,14 @@ export interface IBooking extends Document {
     city: string;
     state: string;
     zipCode: string;
-    coordinates?: [number, number]; // [longitude, latitude]
+    coordinates?: [number, number];
   };
   totalAmount: number;
   notes?: string;
+  platformCommissionRate: number;  // e.g. 0.15 = 15%
+  cancellationReason?: string;
+  cancelledBy?: 'customer' | 'technician' | 'admin';
+  refundAmount?: number;           // actual amount refunded
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,6 +77,10 @@ const bookingSchema = new Schema<IBooking>(
       type: String,
       maxlength: 500,
     },
+    platformCommissionRate: { type: Number, default: 0.15 }, // 15%
+    cancellationReason:    { type: String },
+    cancelledBy:           { type: String, enum: ['customer', 'technician', 'admin'] },
+    refundAmount:          { type: Number, default: 0 },
   },
   {
     timestamps: true,
